@@ -1,7 +1,10 @@
 import React, { useRef, useMemo, useReducer, useCallback } from 'react';
 
+import useInputs from './hooks/useInputs';
+
 import UserList from './UserList';
 import CreateUser from './CreateUser';
+
 
 function countActiveUsers(users) {
   console.log('활성화된 사용자들...');
@@ -37,18 +40,8 @@ const initialState = {
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'CHAGNE_INPUT':
-      return {
-        ...state,
-        inputs: {
-          ...state.inputs,
-          [action.name]: action.value
-        }
-      }
     case 'CREATE_USER':
-      console.log(action.user);
       return {
-        inputs: initialState.inputs,
         users: state.users.concat(action.user)
       }
     case 'TOGGLE_USER':
@@ -68,56 +61,20 @@ function reducer(state, action) {
   }
 }
 
+// null은 default값
+export const UserDispatch = React.createContext(null);
+
 function App() {
   const [ state, dispatch ] = useReducer(reducer, initialState);
-  const nextId = useRef(4);
-
   const { users } = state;
-  const { username, email } = state.inputs;
-
-  const onChange = useCallback(e => {
-    const { name, value } = e.target;
-    dispatch({
-      type: 'CHAGNE_INPUT',
-      name,
-      value
-    });
-  }, []);
-
-  const onCreate = useCallback(() => {
-    dispatch({
-      type: 'CREATE_USER',
-      user: {
-        id: nextId.current,
-        username,
-        email
-      }
-    });
-    nextId.current += 1;
-  }, [username, email])
-
-  const onToggle = useCallback(id => {
-    dispatch({
-      type: 'TOGGLE_USER',
-      id
-    });
-  },[]);
-
-  const onRemove = useCallback(id => {
-    dispatch({
-      type: 'REMOVE_USER',
-      id
-    });
-  }, []);
-
   const count = useMemo(() => countActiveUsers(users), [users]);
 
   return (
-    <>
-      <CreateUser username={username} email={email} onChange={onChange} onCreate={onCreate}/>
-      <UserList users={users} onToggle={onToggle} onRemove={onRemove}/>
+    <UserDispatch.Provider value={dispatch}>
+      <CreateUser />
+      <UserList users={users} />
       <p>활설화된 사용자 수 : {count}</p>
-    </>
+    </UserDispatch.Provider>
   );
 }
 
